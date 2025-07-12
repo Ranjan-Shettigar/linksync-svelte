@@ -3,8 +3,13 @@ import { writable, type Writable } from 'svelte/store';
 import { POCKETBASE_URL } from '$lib/env';
 import { browser } from '$app/environment';
 
-// Create a PocketBase client instance
+// Create a PocketBase client instance with optional auto-cancellation
 const pb = new PocketBase(POCKETBASE_URL);
+
+// Disable auto cancellation if we're in a server environment to prevent issues
+if (!browser) {
+    pb.autoCancellation(false);
+}
 
 // Create stores for authentication state
 export const currentUser: Writable<any> = writable(null);

@@ -314,18 +314,25 @@ export function subscribeToSearchResults(
             console.error('Error in initial search:', error);
         });
         
-        // Subscribe to realtime updates
-        return pb.collection('links').subscribe('*', function(e) {
-            // When data changes, refetch the filtered results
-            pb.collection('links').getList(1, 100, {
-                filter: filter,
-                sort: '-created'
-            }).then(records => {
-                callback(records.items as unknown as Link[]);
-            }).catch(error => {
-                console.error('Error in realtime search update:', error);
+        // Check if we're in a browser environment before subscribing to real-time updates
+        if (typeof window !== 'undefined' && typeof EventSource !== 'undefined') {
+            // Subscribe to realtime updates
+            return pb.collection('links').subscribe('*', function(e) {
+                // When data changes, refetch the filtered results
+                pb.collection('links').getList(1, 100, {
+                    filter: filter,
+                    sort: '-created'
+                }).then(records => {
+                    callback(records.items as unknown as Link[]);
+                }).catch(error => {
+                    console.error('Error in realtime search update:', error);
+                });
             });
-        });
+        } else {
+            // Return a dummy unsubscribe function when not in browser
+            console.info('Real-time updates not available in this environment');
+            return Promise.resolve(() => {});
+        }
     } catch (error) {
         console.error('Error setting up search subscription:', error);
         // Return empty promise with unsubscribe function in case of error
