@@ -11,8 +11,20 @@ RUN npm install
 # Build the SvelteKit app
 RUN npm run build
 
-# Expose port (default SvelteKit port)
+# Start a new, lean container
+FROM node:lts-alpine
+
+WORKDIR /app
+
+# Copy built assets from the builder stage
+COPY --from=builder /app/build ./
+COPY --from=builder /app/package.json ./
+
+# Install only production dependencies
+RUN npm install --omit=dev
+
+# Expose port (default SvelteKit node adapter port)
 EXPOSE 5173
 
 # Start the app
-CMD ["npm", "run", "preview", "--", "--port", "5173"]
+CMD ["node", "index.js"]
